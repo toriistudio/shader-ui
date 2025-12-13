@@ -1,0 +1,103 @@
+{
+  "name": "@toriistudio/shader-ui",
+  "version": "0.0.0",
+  "description": "Shader components",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./preset": {
+      "import": "./dist/preset.mjs",
+      "require": "./dist/preset.js"
+    },
+    "./styles.css": "./dist/index.css"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "local:push": "yarn build && yalc push",
+    "release:patch": "npm version patch && git push --follow-tags && npm publish",
+    "release:minor": "npm version minor && git push --follow-tags && npm publish",
+    "release:major": "npm version major && git push --follow-tags && npm publish",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toriistudio/shader-ui.git"
+  },
+  "keywords": [
+    "react",
+    "component",
+    "headless",
+    "three",
+    "shaders"
+  ],
+  "author": "toriistudio",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/toriistudio/shader-ui/issues"
+  },
+  "homepage": "https://github.com/toriistudio/shader-ui#readme",
+  "peerDependencies": {
+    "react": ">=19 <20",
+    "react-dom": ">=19 <20",
+    "three": ">=0.180 <1",
+    "three-stdlib": ">=2.36.0"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": true
+    },
+    "three-stdlib": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "three": "^0.177.0",
+    "three-stdlib": "^2.36.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "dts": true,
+    "format": [
+      "cjs",
+      "esm"
+    ],
+    "sourcemap": true,
+    "clean": true,
+    "external": [
+      "react",
+      "react-dom",
+      "three",
+      "three-stdlib"
+    ]
+  }
+}
