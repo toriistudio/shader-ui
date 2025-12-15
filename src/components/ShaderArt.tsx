@@ -66,15 +66,14 @@ export default function ShaderArt({
     };
   }, []);
 
-  const handleRender = useCallback((context: SceneContext) => {
-    shaderUniformsRef.current.iTime.value = context.clock.getElapsedTime();
-    const canvas = context.renderer.domElement;
-    shaderUniformsRef.current.iResolution.value.set(
-      canvas.width,
-      canvas.height,
-      1
-    );
-  }, []);
+  const handleRender = useCallback(
+    (context: SceneContext, _delta: number, elapsedTime: number) => {
+      shaderUniformsRef.current.iTime.value = elapsedTime;
+      const { width, height } = context.size;
+      shaderUniformsRef.current.iResolution.value.set(width, height, 1);
+    },
+    []
+  );
 
   const { containerRef } = useScene({
     onCreate: handleCreate,

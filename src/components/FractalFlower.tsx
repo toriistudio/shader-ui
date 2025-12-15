@@ -24,9 +24,9 @@ type FractalFlowerProps = {
   ComponentProps<"div">,
   "ref" | "children" | "color" | "width" | "height"
 > & {
-  width?: string | number;
-  height?: string | number;
-};
+    width?: string | number;
+    height?: string | number;
+  };
 
 const BASE_POINT_COUNT = 20000;
 const ROTATIONS = [
@@ -162,7 +162,12 @@ export default function FractalFlower({
       points.frustumCulled = false;
       scene.add(points);
 
-      assetsRef.current = { points, geometry, material, uniforms: uniformValues };
+      assetsRef.current = {
+        points,
+        geometry,
+        material,
+        uniforms: uniformValues,
+      };
 
       return () => {
         scene.remove(points);
@@ -171,30 +176,34 @@ export default function FractalFlower({
         assetsRef.current = null;
       };
     },
-    [attributes.eValues, attributes.kValues, attributes.positions, attributes.rotations]
+    [
+      attributes.eValues,
+      attributes.kValues,
+      attributes.positions,
+      attributes.rotations,
+    ]
   );
 
   const handleRender = useCallback(
-    (context: SceneContext) => {
+    (context: SceneContext, delta: number, elapsedTime: number) => {
       const assets = assetsRef.current;
       if (!assets) return;
 
       const uniforms = assets.uniforms;
-      uniforms.uTime.value = context.clock.getElapsedTime();
+      uniforms.uTime.value = elapsedTime;
 
-      const canvas = context.renderer.domElement;
-      uniforms.uResolution.value.set(canvas.width, canvas.height);
+      const { width, height } = context.size;
+      uniforms.uResolution.value.set(width, height);
 
       const basePointSize = Math.max(
         2,
-        (canvas.height / 400) * (uniforms.uPetalRadius.value * 32)
+        (height / 400) * (uniforms.uPetalRadius.value * 32)
       );
       const pointSize = Math.min(basePointSize, 6);
       uniforms.uPointSize.value = pointSize;
 
       const morph = morphRef.current;
       if (Math.abs(morph.target - morph.progress) > 0.001) {
-        const delta = context.clock.getDelta();
         const direction = Math.sign(morph.target - morph.progress);
         morph.progress = clamp(
           morph.progress + direction * delta * MORPH_SPEED,

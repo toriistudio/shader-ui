@@ -147,12 +147,15 @@ export default function OranoParticles({
     };
   }, []);
 
-  const handleRender = useCallback((context: SceneContext) => {
-    const assets = particlesRef.current;
-    if (!assets) return;
+  const handleRender = useCallback(
+    (_context: SceneContext, _delta: number, elapsedTime: number) => {
+      const assets = particlesRef.current;
+      if (!assets) return;
 
-    assets.uniforms.uTime.value = context.clock.getElapsedTime();
-  }, []);
+      assets.uniforms.uTime.value = elapsedTime;
+    },
+    []
+  );
 
   const { containerRef } = useScene({
     onCreate: handleCreate,
