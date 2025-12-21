@@ -32,6 +32,7 @@ type UseSceneOptions = {
     size: { width: number; height: number }
   ) => void;
   deps?: DependencyList;
+  manualRender?: boolean;
 };
 
 const EMPTY_DEPS: [] = [];
@@ -44,6 +45,7 @@ export default function useScene({
   onRender,
   onResize,
   deps,
+  manualRender = false,
 }: UseSceneOptions = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contextRef = useRef<SceneContext | null>(null);
@@ -85,6 +87,10 @@ export default function useScene({
       antialias: true,
       ...rendererOptions,
     });
+    renderer.autoClear = false;
+    renderer.autoClearColor = true;
+    renderer.autoClearDepth = true;
+    renderer.autoClearStencil = true;
     renderer.setPixelRatio(resolvedPixelRatio);
     renderer.setSize(initialWidth, initialHeight, false);
     renderer.setClearColor(0x000000, 0);
@@ -140,7 +146,9 @@ export default function useScene({
       elapsedTime += delta;
       context.size = { ...sizeRef.current };
       onRenderRef.current?.(context, delta, elapsedTime);
-      renderer.render(scene, camera);
+      if (!manualRender) {
+        renderer.render(scene, camera);
+      }
       animationFrameId = requestAnimationFrame(renderLoop);
     };
     animationFrameId = requestAnimationFrame(renderLoop);
@@ -153,13 +161,14 @@ export default function useScene({
 
       if (camera instanceof THREE.PerspectiveCamera) {
         camera.aspect = width / Math.max(1, height);
+        camera.updateProjectionMatrix();
       } else if (camera instanceof THREE.OrthographicCamera) {
         camera.left = -width / 2;
         camera.right = width / 2;
         camera.top = height / 2;
         camera.bottom = -height / 2;
+        camera.updateProjectionMatrix();
       }
-      camera.updateProjectionMatrix();
       context.size = { ...sizeRef.current };
       onResizeRef.current?.(context, { width, height });
     });
