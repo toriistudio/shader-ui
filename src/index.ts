@@ -20,3 +20,6 @@ export {
   type EfectoAsciiStyle,
   type EfectoAsciiColorPalette,
 } from "@/components/EfectoAsciiEffect";
+
+export { default as Snow } from "@/components/Snow";
+export { default as AnimatedDrawingSVG } from "@/components/AnimatedDrawingSVG";
