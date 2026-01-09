@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  Playground,
-  useControls,
-  type ControlsSchema,
-} from "@toriistudio/v0-playground";
-import { AnimatedDrawingSVG, Snow } from "@toriistudio/shader-ui";
+import { Playground } from "@toriistudio/v0-playground";
+import { AnimatedDrawingSVG, Snow, WandyHand } from "@toriistudio/shader-ui";
 
 const CHRISTMAS_SVG = `
 <svg width="562" height="67" viewBox="0 0 562 67" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -48,12 +44,7 @@ export default function ChristmasPage() {
         />
         <div className="pointer-events-none relative z-10 flex h-full w-full flex-col items-center justify-center gap-1 px-2">
           <div className="flex w-full justify-center px-4 sm:px-8">
-            <AnimatedDrawingSVG
-              className="w-full"
-              svgMarkup={CHRISTMAS_SVG}
-              animated
-              size="min(95vw, 2440px)"
-            />
+            <WandyHand text="Happy Holidays!" />
           </div>
 
           <div className="flex w-full justify-center px-4 sm:px-8">
@@ -61,7 +52,7 @@ export default function ChristmasPage() {
               className="w-full"
               svgMarkup={CHRISTMAS_DESCRIPTION_SVG}
               animated
-              delay={2000}
+              delay={3500}
               size="min(95vw, 2440px)"
             />
           </div>
@@ -71,7 +62,7 @@ export default function ChristmasPage() {
         <AnimatedDrawingSVG
           svgMarkup={CHRISTMAS_SIGNATURE_SVG}
           animated
-          delay={3500}
+          delay={5000}
           size="min(60vw, 400px)"
         />
       </div>

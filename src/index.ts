@@ -23,3 +23,7 @@ export {
 
 export { default as Snow } from "@/components/Snow";
 export { default as AnimatedDrawingSVG } from "@/components/AnimatedDrawingSVG";
+export {
+  default as WandyHand,
+  WANDY_HAND_DEFAULTS,
+} from "@/components/WandyHand";

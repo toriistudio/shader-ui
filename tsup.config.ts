@@ -21,6 +21,7 @@ export default defineConfig([
       options.loader = {
         ...(options.loader ?? {}),
         ".glsl": "text",
+        ".ttf": "dataurl",
       };
     },
   },
