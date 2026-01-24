@@ -712,7 +712,7 @@ export const WANDY_HAND_DEFAULTS = {
 } as const;
 
 export default function WandyHand({
-  text,
+  text = "",
   fontUrl,
   fontSize,
   durationMs = WANDY_HAND_DEFAULTS.durationMs,
@@ -832,7 +832,8 @@ export default function WandyHand({
 
   const prepared = useMemo(() => {
     if (!font) return null;
-    const safe = text.trim().length ? text : " ";
+    const safeText = typeof text === "string" ? text : "";
+    const safe = safeText.trim().length ? safeText : " ";
     return prepareText(font, safe, resolvedFontSize, resolvedSamplesPerCurve);
   }, [font, text, resolvedFontSize, resolvedSamplesPerCurve]);
 
@@ -845,7 +846,8 @@ export default function WandyHand({
 
   const strokePlan = useMemo(() => {
     if (!prepared) return null;
-    const safe = text.trim().length ? text : " ";
+    const safeText = typeof text === "string" ? text : "";
+    const safe = safeText.trim().length ? safeText : " ";
     return createStrokePlan(
       prepared.contours,
       prepared.totalLen,

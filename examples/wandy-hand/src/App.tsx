@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Playground,
   useControls,
@@ -11,7 +11,7 @@ import { WANDY_HAND_DEFAULTS, WandyHand } from "@toriistudio/shader-ui";
 function WandyHandScene() {
   const controls = useControls(
     {
-      text: { type: "string", value: "Happy", folder: "Copy" },
+      text: { type: "string", value: "Hello.", folder: "Copy" },
       fontSize: {
         type: "number",
         value: 160,
@@ -150,10 +150,22 @@ function WandyHandScene() {
       },
     }
   );
+  const [debouncedText, setDebouncedText] = useState(
+    typeof controls.text === "string" ? controls.text : ""
+  );
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setDebouncedText(controls.text);
+    }, 300);
+    return () => {
+      window.clearTimeout(handle);
+    };
+  }, [controls.text]);
 
   return (
     <WandyHand
-      text={controls.text}
+      text={debouncedText}
       fontSize={controls.fontSize}
       durationMs={controls.durationMs}
       strokeWidth={controls.strokeWidth}

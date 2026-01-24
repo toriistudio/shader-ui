@@ -27,3 +27,4 @@ export {
   default as WandyHand,
   WANDY_HAND_DEFAULTS,
 } from "@/components/WandyHand";
+export { default as RippleWave } from "@/components/RippleWave";
