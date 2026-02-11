@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, type ComponentProps } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type ComponentProps,
+  type RefObject,
+} from "react";
 import * as THREE from "three";
 
 import useScene, { type SceneContext } from "@/hooks/useScene";
+import { useSceneContext } from "@/hooks/SceneProvider";
 
 type ShaderPassBaseProps = {
   /** GLSL vertex shader */
@@ -47,6 +55,7 @@ type ShaderPassBaseProps = {
 
   /** Render priority in the frame loop (lower runs earlier) */
   priority?: number;
+
 };
 
 export type ShaderPassProps = ShaderPassBaseProps &
@@ -95,7 +104,7 @@ export default function ShaderPass({
   timeUniform,
   resolutionUniform,
   hexColors,
-  priority: _priority,
+  priority = 0,
   className,
   style,
   width,
@@ -103,8 +112,8 @@ export default function ShaderPass({
   ...divProps
 }: ShaderPassProps) {
   const assetsRef = useRef<PassAssets | null>(null);
-  void _priority;
-
+  const sharedScene = useSceneContext();
+  const sharedReady = sharedScene?.ready ?? true;
   const mixedPaletteColor = useMemo(() => {
     if (!hexColors?.length) return null;
     const mixed = new THREE.Color(0, 0, 0);
@@ -145,6 +154,7 @@ export default function ShaderPass({
   const handleCreate = useCallback(() => {
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    camera.position.z = 1;
 
     const geometry = buildQuadGeometry();
     const material = new THREE.ShaderMaterial({
@@ -209,11 +219,64 @@ export default function ShaderPass({
     [clear, clearColor, enabled, resolutionUniform, target, timeUniform, uniforms]
   );
 
-  const { containerRef } = useScene({
-    onCreate: handleCreate,
-    onRender: handleRender,
+  const sharedContextRef = sharedScene?.contextRef;
+  const shouldCreateOwnScene = !sharedContextRef;
+
+  // Use external/shared context if provided, otherwise create own scene
+  const ownScene = useScene({
+    onCreate: shouldCreateOwnScene ? handleCreate : undefined,
+    onRender: shouldCreateOwnScene ? handleRender : undefined,
     manualRender: true,
   });
+
+  const containerRef = shouldCreateOwnScene
+    ? ownScene.containerRef
+    : useRef<HTMLDivElement>(null);
+
+  // If using external context, set up assets and register render callback
+  useEffect(() => {
+    if (!sharedContextRef || !sharedReady) return;
+
+    // Create assets
+    const cleanup = handleCreate();
+
+    // Register render callback with external context
+    // Note: This is a simplified approach - in production you'd want a proper
+    // callback registration system
+
+    return cleanup;
+  }, [sharedContextRef, handleCreate, sharedReady]);
+
+  // Manual render when using external context
+  useEffect(() => {
+    if (!sharedContextRef?.current || !enabled || !sharedReady) return;
+
+    const context = sharedContextRef.current;
+    const register = context.registerRenderCallback;
+    if (!register) {
+      let lastTime = performance.now();
+      const renderOnce = () => {
+        const now = performance.now();
+        const delta = (now - lastTime) / 1000;
+        lastTime = now;
+        handleRender(context, delta);
+      };
+      renderOnce();
+      return;
+    }
+
+    const unregister = register(
+      (ctx, delta, elapsed) => {
+        void elapsed;
+        handleRender(ctx, delta);
+      },
+      priority
+    );
+
+    return () => {
+      unregister?.();
+    };
+  }, [sharedContextRef, enabled, handleRender, priority, sharedReady]);
 
   useEffect(() => {
     if (!inputTexture) return;
@@ -237,6 +300,10 @@ export default function ShaderPass({
     assets.material.transparent = transparent;
     assets.material.needsUpdate = true;
   }, [blending, transparent]);
+
+  if (!shouldCreateOwnScene) {
+    return null;
+  }
 
   return (
     <div
