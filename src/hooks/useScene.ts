@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type DependencyList } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DependencyList,
+} from "react";
 import * as THREE from "three";
 
 export type SceneContext = {
@@ -9,6 +15,14 @@ export type SceneContext = {
   camera: THREE.Camera;
   clock: THREE.Clock;
   size: { width: number; height: number };
+  registerRenderCallback?: (
+    callback: (
+      context: SceneContext,
+      deltaTime: number,
+      elapsedTime: number
+    ) => void,
+    priority?: number
+  ) => () => void;
 };
 
 type UseSceneOptions = {
@@ -53,6 +67,20 @@ export default function useScene({
   const onRenderRef = useRef(onRender);
   const onResizeRef = useRef(onResize);
   const sizeRef = useRef({ width: 0, height: 0 });
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [ready, setReady] = useState(false);
+  const renderCallbacksRef = useRef<
+    Array<{
+      id: number;
+      priority: number;
+      callback: (
+        context: SceneContext,
+        deltaTime: number,
+        elapsedTime: number
+      ) => void;
+    }>
+  >([]);
+  const nextRenderCallbackId = useRef(0);
 
   useEffect(() => {
     onCreateRef.current = onCreate;
@@ -66,7 +94,58 @@ export default function useScene({
     onResizeRef.current = onResize;
   }, [onResize]);
 
+  const getFallbackSize = () => {
+    if (typeof window === "undefined") {
+      return { width: 1, height: 1 };
+    }
+
+    const canvas = window.document?.querySelector("canvas");
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        width: rect.width || canvas.clientWidth || window.innerWidth || 1,
+        height: rect.height || canvas.clientHeight || window.innerHeight || 1,
+      };
+    }
+
+    return { width: window.innerWidth || 1, height: window.innerHeight || 1 };
+  };
+
+  // Measure container size synchronously before first paint
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      const initialSize = getFallbackSize();
+      sizeRef.current = initialSize;
+      setSize(initialSize);
+      return;
+    }
+
+    const initialWidth = container.clientWidth || 1;
+    const initialHeight = container.clientHeight || 1;
+    const initialSize = { width: initialWidth, height: initialHeight };
+    sizeRef.current = initialSize;
+    setSize(initialSize);
+  }, []);
+
   const effectDeps = deps ?? EMPTY_DEPS;
+
+  useEffect(() => {
+    if (containerRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const handleResize = () => {
+      if (containerRef.current) return;
+      const nextSize = getFallbackSize();
+      sizeRef.current = nextSize;
+      setSize(nextSize);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -80,7 +159,9 @@ export default function useScene({
 
     const initialWidth = container.clientWidth || 1;
     const initialHeight = container.clientHeight || 1;
-    sizeRef.current = { width: initialWidth, height: initialHeight };
+    const initialSize = { width: initialWidth, height: initialHeight };
+    sizeRef.current = initialSize;
+    setSize(initialSize);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -128,14 +209,38 @@ export default function useScene({
     }
 
     const clock = new THREE.Clock();
+
+    const registerRenderCallback = (
+      callback: (
+        context: SceneContext,
+        deltaTime: number,
+        elapsedTime: number
+      ) => void,
+      priority = 0
+    ) => {
+      const id = nextRenderCallbackId.current++;
+      const entry = { id, priority, callback };
+      renderCallbacksRef.current = [...renderCallbacksRef.current, entry].sort(
+        (a, b) => (a.priority - b.priority) || (a.id - b.id)
+      );
+
+      return () => {
+        renderCallbacksRef.current = renderCallbacksRef.current.filter(
+          (item) => item.id !== id
+        );
+      };
+    };
+
     const context: SceneContext = {
       renderer,
       scene,
       camera,
       clock,
       size: { ...sizeRef.current },
+      registerRenderCallback,
     };
     contextRef.current = context;
+    setReady(true);
 
     const teardownCreate = onCreateRef.current?.(context);
 
@@ -146,6 +251,9 @@ export default function useScene({
       elapsedTime += delta;
       context.size = { ...sizeRef.current };
       onRenderRef.current?.(context, delta, elapsedTime);
+      renderCallbacksRef.current.forEach((entry) => {
+        entry.callback(context, delta, elapsedTime);
+      });
       if (!manualRender) {
         renderer.render(scene, camera);
       }
@@ -157,7 +265,9 @@ export default function useScene({
       const width = container.clientWidth || 1;
       const height = container.clientHeight || 1;
       renderer.setSize(width, height, false);
-      sizeRef.current = { width, height };
+      const newSize = { width, height };
+      sizeRef.current = newSize;
+      setSize(newSize);
 
       if (camera instanceof THREE.PerspectiveCamera) {
         camera.aspect = width / Math.max(1, height);
@@ -184,8 +294,9 @@ export default function useScene({
         container.removeChild(renderer.domElement);
       }
       contextRef.current = null;
+      setReady(false);
     };
   }, effectDeps);
 
-  return { containerRef, contextRef };
+  return { containerRef, contextRef, size, ready };
 }

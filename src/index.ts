@@ -28,3 +28,4 @@ export {
   WANDY_HAND_DEFAULTS,
 } from "@/components/WandyHand";
 export { default as RippleWave } from "@/components/RippleWave";
+export { default as DitherPulseRing } from "@/components/DitherPulseRing";
