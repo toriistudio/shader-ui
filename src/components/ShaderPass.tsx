@@ -10,8 +10,8 @@ import {
 } from "react";
 import * as THREE from "three";
 
+import { useSceneContext } from "@/context/SceneProvider";
 import useScene, { type SceneContext } from "@/hooks/useScene";
-import { useSceneContext } from "@/hooks/SceneProvider";
 
 type ShaderPassBaseProps = {
   /** GLSL vertex shader */
@@ -55,7 +55,6 @@ type ShaderPassBaseProps = {
 
   /** Render priority in the frame loop (lower runs earlier) */
   priority?: number;
-
 };
 
 export type ShaderPassProps = ShaderPassBaseProps &
@@ -136,7 +135,7 @@ export default function ShaderPass({
       };
     } else {
       (uniforms.uPaletteColor.value as THREE.Color).copy(
-        mixedPaletteColor ?? new THREE.Color(0, 0, 0)
+        mixedPaletteColor ?? new THREE.Color(0, 0, 0),
       );
     }
 
@@ -188,7 +187,8 @@ export default function ShaderPass({
       if (!assets) return;
 
       if (timeUniform && uniforms[timeUniform]) {
-        uniforms[timeUniform].value = (uniforms[timeUniform].value ?? 0) + delta;
+        uniforms[timeUniform].value =
+          (uniforms[timeUniform].value ?? 0) + delta;
       }
 
       if (resolutionUniform && uniforms[resolutionUniform]) {
@@ -216,7 +216,15 @@ export default function ShaderPass({
       context.renderer.setRenderTarget(prevTarget);
       context.renderer.autoClear = prevAutoClear;
     },
-    [clear, clearColor, enabled, resolutionUniform, target, timeUniform, uniforms]
+    [
+      clear,
+      clearColor,
+      enabled,
+      resolutionUniform,
+      target,
+      timeUniform,
+      uniforms,
+    ],
   );
 
   const sharedContextRef = sharedScene?.contextRef;
@@ -265,13 +273,10 @@ export default function ShaderPass({
       return;
     }
 
-    const unregister = register(
-      (ctx, delta, elapsed) => {
-        void elapsed;
-        handleRender(ctx, delta);
-      },
-      priority
-    );
+    const unregister = register((ctx, delta, elapsed) => {
+      void elapsed;
+      handleRender(ctx, delta);
+    }, priority);
 
     return () => {
       unregister?.();

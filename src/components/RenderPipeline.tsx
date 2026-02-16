@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo } from "react";
 import type { ComponentType } from "react";
 import * as THREE from "three";
 
-import CombineShaderPass from "@/components/CombineShaderPass";
+import { useSceneContext } from "@/context/SceneProvider";
 import TargetPreview from "@/components/TargetPreview";
-import { useSceneContext } from "@/hooks/SceneProvider";
+import CombineShaderPass from "@/components/CombineShaderPass";
+import type {
+  CombineMode,
+  CombineShaderPassProps,
+} from "@/components/CombineShaderPass";
 
 type RenderPassSpec = {
   component: ComponentType<any>;
@@ -14,8 +18,13 @@ type RenderPassSpec = {
   enabled?: boolean;
 };
 
+type CombineOptions = Partial<
+  Omit<CombineShaderPassProps, "inputA" | "inputB" | "target">
+> & { mode?: CombineMode };
+
 type RenderPipelineProps = {
   passes: RenderPassSpec[];
+  combine?: CombineOptions;
   preview?: boolean;
   previewProps?: Partial<React.ComponentProps<typeof TargetPreview>>;
 };
@@ -25,13 +34,14 @@ type TargetEntry = {
   target: THREE.WebGLRenderTarget;
 };
 
-const DEFAULT_TARGET_OPTIONS: THREE.WebGLRenderTargetOptions = {
+const DEFAULT_TARGET_OPTIONS: THREE.RenderTargetOptions = {
   depthBuffer: false,
   stencilBuffer: false,
 };
 
 export default function RenderPipeline({
   passes,
+  combine,
   preview = true,
   previewProps,
 }: RenderPipelineProps) {
@@ -72,14 +82,17 @@ export default function RenderPipeline({
   }
 
   const passTargets = targets.filter((entry) => entry.key.startsWith("pass_"));
-  const combineTarget = targets.find((entry) => entry.key === "combine")?.target;
+  const combineTarget = targets.find(
+    (entry) => entry.key === "combine",
+  )?.target;
 
   const firstEnabledIndex = passes.findIndex((pass) => pass.enabled !== false);
   const secondEnabledIndex = passes.findIndex(
-    (pass, index) => index > firstEnabledIndex && pass.enabled !== false
+    (pass, index) => index > firstEnabledIndex && pass.enabled !== false,
   );
 
-  const passOutputTarget = (index: number) => passTargets[index]?.target ?? null;
+  const passOutputTarget = (index: number) =>
+    passTargets[index]?.target ?? null;
 
   const getOutputTarget = () => {
     if (!passes.length) return null;
@@ -121,20 +134,22 @@ export default function RenderPipeline({
     if (!combineRendered && combineTarget && index === secondEnabledIndex) {
       const inputA =
         passOutputTarget(firstEnabledIndex)?.texture ?? inputTexture;
-      const inputB = passOutputTarget(secondEnabledIndex)?.texture ?? inputTexture;
+      const inputB =
+        passOutputTarget(secondEnabledIndex)?.texture ?? inputTexture;
 
       combineRendered = true;
       previousOutput = combineTarget;
 
       return (
-        <>
+        <Fragment key={`combine_${index}`}>
           {element}
           <CombineShaderPass
+            {...combine}
             inputA={inputA}
             inputB={inputB}
             target={combineTarget}
           />
-        </>
+        </Fragment>
       );
     }
 

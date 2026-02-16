@@ -2,21 +2,47 @@
 
 import { Playground, useControls } from "@toriistudio/v0-playground";
 
-import { DitherPulseRing as DitherPulseRing } from "@toriistudio/shader-ui";
+import { DitherPulseRing } from "@toriistudio/shader-ui";
+import type { CombineShaderMode } from "@toriistudio/shader-ui";
 
 const BOLDER_FOLDER = "Border Settings";
 const RING_FOLDER = "Ring Settings";
 const DIFFUSE_FOLDER = "Diffuse Settings";
 const BLUR_FOLDER = "Blur Settings";
 const NOISE_FOLDER = "Noise Settings";
+const GENERAL_FOLDER = "General Settings";
 const CONTROL_SCHEMA = {
   color: {
     type: "color" as const,
     value: "#4599ff",
+    folder: GENERAL_FOLDER,
+  },
+  combineMode: {
+    type: "select" as const,
+    value: "alphaOver",
+    options: {
+      add: "add",
+      screen: "screen",
+      multiply: "multiply",
+      overlay: "overlay",
+      max: "max",
+      min: "min",
+      difference: "difference",
+      alphaOver: "alphaOver",
+      premultipliedOver: "premultipliedOver",
+      lerp: "lerp",
+      mask: "mask",
+    },
+    folder: GENERAL_FOLDER,
+  },
+  glyphDitherEnabled: {
+    type: "boolean" as const,
+    value: true,
+    folder: GENERAL_FOLDER,
   },
   noiseWarpEnabled: {
     type: "boolean" as const,
-    value: false,
+    value: true,
     folder: NOISE_FOLDER,
   },
   noiseWarpStrength: {
@@ -35,10 +61,7 @@ const CONTROL_SCHEMA = {
     step: 0.01,
     folder: NOISE_FOLDER,
   },
-  glyphDitherEnabled: {
-    type: "boolean" as const,
-    value: false,
-  },
+
   diffuseEnabled: {
     type: "boolean" as const,
     value: true,
@@ -128,17 +151,6 @@ const CONTROL_SCHEMA = {
   },
 };
 
-function hexToRgb01(hex: string): [number, number, number] {
-  const normalized = hex.replace("#", "");
-  if (normalized.length !== 6) {
-    return [0.27, 0.6, 1.0];
-  }
-  const r = parseInt(normalized.slice(0, 2), 16) / 255;
-  const g = parseInt(normalized.slice(2, 4), 16) / 255;
-  const b = parseInt(normalized.slice(4, 6), 16) / 255;
-  return [r, g, b];
-}
-
 function ShaderScene() {
   const controls = useControls(CONTROL_SCHEMA, {
     componentName: "DitherPulseRing",
@@ -146,8 +158,30 @@ function ShaderScene() {
       mainLabel: "Controls",
       showCopyButton: false,
       showCodeSnippet: true,
+      showCopyButtonFn: ({ values, jsonToComponentString }) => {
+        const newValues = Object.fromEntries(
+          Object.entries(values).filter(
+            ([key]) =>
+              Object.prototype.hasOwnProperty.call(CONTROL_SCHEMA, key) &&
+              key !== "color",
+          ),
+        );
+        const color = values.color ?? CONTROL_SCHEMA.color.value;
+
+        return jsonToComponentString({
+          props: {
+            width: "100%",
+            height: "100%",
+            ringColor: color,
+            borderColor: color,
+            ...newValues,
+          },
+        });
+      },
     },
   });
+
+  const color = controls.color ?? CONTROL_SCHEMA.color.value;
 
   return (
     <DitherPulseRing
@@ -165,6 +199,10 @@ function ShaderScene() {
       glyphDitherEnabled={
         controls.glyphDitherEnabled ?? CONTROL_SCHEMA.glyphDitherEnabled.value
       }
+      combineMode={
+        (controls.combineMode ??
+          CONTROL_SCHEMA.combineMode.value) as CombineShaderMode
+      }
       diffuseEnabled={
         controls.diffuseEnabled ?? CONTROL_SCHEMA.diffuseEnabled.value
       }
@@ -179,12 +217,12 @@ function ShaderScene() {
       borderIntensity={
         controls.borderIntensity ?? CONTROL_SCHEMA.borderIntensity.value
       }
-      borderColor={hexToRgb01(controls.color ?? CONTROL_SCHEMA.color.value)}
+      borderColor={color}
+      ringColor={color}
       borderTonemap={
         controls.borderTonemap ?? CONTROL_SCHEMA.borderTonemap.value
       }
       borderAlpha={controls.borderAlpha ?? CONTROL_SCHEMA.borderAlpha.value}
-      ringColor={hexToRgb01(controls.color ?? CONTROL_SCHEMA.color.value)}
       ringSpeed={controls.ringSpeed ?? CONTROL_SCHEMA.ringSpeed.value}
       ringAlpha={controls.ringAlpha ?? CONTROL_SCHEMA.ringAlpha.value}
       ringPosition={[

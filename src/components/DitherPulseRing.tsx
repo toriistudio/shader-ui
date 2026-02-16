@@ -1,7 +1,6 @@
 "use client";
 
-
-import { SceneProvider } from "@/hooks/SceneProvider";
+import { SceneProvider } from "@/context/SceneProvider";
 import { DITHER_SPRITE_TEXTURE_SRC } from "@/constants/dither";
 
 import BorderBeamPass, {
@@ -21,6 +20,7 @@ import GlyphDitherPass, {
 import NoiseWarpPass, {
   type NoiseWarpPassUniforms,
 } from "@/components/DitherNoiseWarpPass";
+import type { CombineMode } from "@/components/CombineShaderPass";
 
 type DitherPulseRingProps = {
   spriteTextureSrc?: string;
@@ -28,17 +28,18 @@ type DitherPulseRingProps = {
   diffuseEnabled?: boolean;
   blurEnabled?: boolean;
   noiseWarpEnabled?: boolean;
+  combineMode?: CombineMode;
   noiseWarpRadius?: NoiseWarpPassUniforms["radius"];
   noiseWarpStrength?: NoiseWarpPassUniforms["strength"];
   diffuseRadius?: DiffusePassUniforms["diffuseRadius"];
   blurRadius?: BlurPassUniforms["blurRadius"];
   borderThickness?: number;
   borderIntensity?: number;
-  borderColor?: BorderBeamPassUniforms["color"];
+  borderColor?: BorderBeamPassUniforms["color"] | string;
   borderDitherStrength?: number;
   borderTonemap?: boolean;
   borderAlpha?: number;
-  ringColor?: ExpandingRingPassUniforms["color"];
+  ringColor?: ExpandingRingPassUniforms["color"] | string;
   ringSpeed?: number;
   ringPosition?: ExpandingRingPassUniforms["position"];
   ringAlpha?: ExpandingRingPassUniforms["alpha"];
@@ -54,6 +55,7 @@ export default function DitherPulseRing({
   diffuseEnabled = false,
   blurEnabled = false,
   noiseWarpEnabled = false,
+  combineMode,
   noiseWarpRadius,
   noiseWarpStrength,
   diffuseRadius,
@@ -89,6 +91,7 @@ export default function DitherPulseRing({
         diffuseEnabled={diffuseEnabled}
         blurEnabled={blurEnabled}
         noiseWarpEnabled={noiseWarpEnabled}
+        combineMode={combineMode}
         noiseWarpRadius={noiseWarpRadius}
         noiseWarpStrength={noiseWarpStrength}
         diffuseRadius={diffuseRadius}
@@ -114,6 +117,7 @@ function DitherPulseRingContent({
   diffuseEnabled = false,
   blurEnabled = false,
   noiseWarpEnabled = false,
+  combineMode,
   noiseWarpRadius,
   noiseWarpStrength,
   diffuseRadius,
@@ -129,7 +133,25 @@ function DitherPulseRingContent({
   ringPosition,
   ringAlpha,
 }: DitherPulseRingProps) {
+  const normalizeHexColor = (hex?: string) => {
+    if (!hex) return null;
+    const normalized = hex.replace("#", "");
+    if (normalized.length !== 6) return null;
+    const r = parseInt(normalized.slice(0, 2), 16) / 255;
+    const g = parseInt(normalized.slice(2, 4), 16) / 255;
+    const b = parseInt(normalized.slice(4, 6), 16) / 255;
+    return [r, g, b] as [number, number, number];
+  };
 
+  const resolveColor = (
+    color?: [number, number, number] | string
+  ): [number, number, number] | null => {
+    if (!color) return null;
+    if (typeof color === "string") {
+      return normalizeHexColor(color);
+    }
+    return color;
+  };
   const glyphUniforms: Partial<GlyphDitherPassUniforms> = {};
   glyphUniforms.trackMouse = false;
 
@@ -157,7 +179,8 @@ function DitherPulseRingContent({
   const borderUniforms: Partial<BorderBeamPassUniforms> = {};
   if (borderThickness !== undefined) borderUniforms.thickness = borderThickness;
   if (borderIntensity !== undefined) borderUniforms.intensity = borderIntensity;
-  if (borderColor) borderUniforms.color = borderColor;
+  const resolvedBorderColor = resolveColor(borderColor);
+  if (resolvedBorderColor) borderUniforms.color = resolvedBorderColor;
   if (borderDitherStrength !== undefined) {
     borderUniforms.ditherStrength = borderDitherStrength;
   }
@@ -165,43 +188,61 @@ function DitherPulseRingContent({
   if (borderAlpha !== undefined) borderUniforms.alpha = borderAlpha;
 
   const ringUniforms: Partial<ExpandingRingPassUniforms> = {};
-  if (ringColor) ringUniforms.color = ringColor;
+  const resolvedRingColor = resolveColor(ringColor);
+  if (resolvedRingColor) ringUniforms.color = resolvedRingColor;
   if (ringSpeed !== undefined) ringUniforms.speed = ringSpeed;
   if (ringPosition) ringUniforms.position = ringPosition;
   if (ringAlpha !== undefined) ringUniforms.alpha = ringAlpha;
 
   return (
-    <RenderPipeline
-      passes={[
-        {
-          component: BorderBeamPass,
-          props: { uniforms: borderUniforms },
-        },
-        {
-          component: ExpandingRingPass,
-          props: { clear: true, uniforms: ringUniforms },
-        },
-        {
-          component: NoiseWarpPass,
-          enabled: noiseWarpEnabled,
-          props: { uniforms: noiseUniforms },
-        },
-        {
-          component: GlyphDitherPass,
-          enabled: glyphDitherEnabled,
-          props: { spriteTextureSrc, uniforms: glyphUniforms },
-        },
-        {
-          component: DiffusePass,
-          enabled: diffuseEnabled,
-          props: { uniforms: diffuseUniforms },
-        },
-        {
-          component: BlurPass,
-          enabled: blurEnabled,
-          props: { uniforms: blurUniforms },
-        },
-      ]}
-    />
+    <>
+      <RenderPipeline
+        passes={[
+          {
+            component: BorderBeamPass,
+            props: { uniforms: borderUniforms },
+          },
+          {
+            component: GlyphDitherPass,
+            enabled: glyphDitherEnabled,
+            props: { spriteTextureSrc, uniforms: glyphUniforms },
+          },
+        ]}
+        combine={combineMode ? { mode: combineMode } : undefined}
+      />
+      <RenderPipeline
+        passes={[
+          {
+            component: BorderBeamPass,
+            props: { uniforms: borderUniforms },
+          },
+          {
+            component: ExpandingRingPass,
+            props: { uniforms: ringUniforms },
+          },
+          {
+            component: NoiseWarpPass,
+            enabled: noiseWarpEnabled,
+            props: { uniforms: noiseUniforms },
+          },
+          {
+            component: GlyphDitherPass,
+            enabled: glyphDitherEnabled,
+            props: { spriteTextureSrc, uniforms: glyphUniforms },
+          },
+          {
+            component: DiffusePass,
+            enabled: diffuseEnabled,
+            props: { uniforms: diffuseUniforms },
+          },
+          {
+            component: BlurPass,
+            enabled: blurEnabled,
+            props: { uniforms: blurUniforms },
+          },
+        ]}
+        combine={combineMode ? { mode: combineMode } : undefined}
+      />
+    </>
   );
 }

@@ -29,3 +29,4 @@ export {
 } from "@/components/WandyHand";
 export { default as RippleWave } from "@/components/RippleWave";
 export { default as DitherPulseRing } from "@/components/DitherPulseRing";
+export { type CombineMode as CombineShaderMode } from "@/components/CombineShaderPass";

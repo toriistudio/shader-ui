@@ -10,7 +10,7 @@ import {
 import * as THREE from "three";
 
 import useScene, { type SceneContext } from "@/hooks/useScene";
-import { useSceneContext } from "@/hooks/SceneProvider";
+import { useSceneContext } from "@/context/SceneProvider";
 
 type TargetPreviewBaseProps = {
   target: THREE.WebGLRenderTarget;
@@ -122,12 +122,9 @@ export default function TargetPreview({
       return;
     }
 
-    const unregister = register(
-      (ctx) => {
-        handleRender(ctx);
-      },
-      renderOrder
-    );
+    const unregister = register((ctx) => {
+      handleRender(ctx);
+    }, renderOrder);
 
     return () => {
       unregister?.();

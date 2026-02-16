@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "@toriistudio/shader-ui": {
-      "signature": "ebee6418276ef2b58d793fe253800d69",
+      "signature": "e0cb6d5f9d03912277bf35c2aad34e74",
       "file": true
     }
   }

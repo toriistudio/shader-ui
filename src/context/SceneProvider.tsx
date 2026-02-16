@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  type PropsWithChildren,
-} from "react";
+import { createContext, useContext, type PropsWithChildren } from "react";
 
 import useScene, { type SceneContext } from "@/hooks/useScene";
 
@@ -26,7 +22,7 @@ type SceneProviderProps = PropsWithChildren<{
   onRender?: (
     context: SceneContext,
     deltaTime: number,
-    elapsedTime: number
+    elapsedTime: number,
   ) => void;
 }>;
 
