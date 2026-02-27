@@ -70,21 +70,24 @@ export default function useMouse({
       mouse.set(center?.x ?? 0.5, center?.y ?? 0.5);
     };
 
-    const moveTarget: HTMLElement | Window = element ?? window;
-    moveTarget.addEventListener("mousemove", handleMouseMove);
-    moveTarget.addEventListener("mouseleave", handleMouseLeave);
     if (element) {
+      element.addEventListener("mousemove", handleMouseMove);
+      element.addEventListener("mouseleave", handleMouseLeave);
       element.addEventListener("mouseenter", updateRect);
+    } else if (hasWindow) {
+      window.addEventListener("mousemove", handleMouseMove);
     }
     if (hasWindow) {
       window.addEventListener("resize", handleResize);
     }
 
     return () => {
-      moveTarget.removeEventListener("mousemove", handleMouseMove);
-      moveTarget.removeEventListener("mouseleave", handleMouseLeave);
       if (element) {
+        element.removeEventListener("mousemove", handleMouseMove);
+        element.removeEventListener("mouseleave", handleMouseLeave);
         element.removeEventListener("mouseenter", updateRect);
+      } else if (hasWindow) {
+        window.removeEventListener("mousemove", handleMouseMove);
       }
       if (hasWindow) {
         window.removeEventListener("resize", handleResize);

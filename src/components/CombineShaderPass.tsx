@@ -5,7 +5,7 @@ import * as THREE from "three";
 
 import ShaderPass from "@/components/ShaderPass";
 
-export type CombineMode =
+export type CombineShaderMode =
   | "add"
   | "screen"
   | "multiply"
@@ -23,7 +23,7 @@ export type Tonemap = "none" | "reinhard" | "aces";
 export type CombineShaderPassProps = {
   inputA: THREE.Texture;
   inputB: THREE.Texture;
-  mode?: CombineMode;
+  mode?: CombineShaderMode;
   opacityA?: number;
   opacityB?: number;
   clampOutput?: boolean;
@@ -38,7 +38,7 @@ export type CombineShaderPassProps = {
   priority?: number;
 };
 
-const COMBINE_MODE: Record<CombineMode, number> = {
+const COMBINE_MODE: Record<CombineShaderMode, number> = {
   add: 0,
   screen: 1,
   multiply: 2,

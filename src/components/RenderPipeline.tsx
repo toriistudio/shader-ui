@@ -8,7 +8,7 @@ import { useSceneContext } from "@/context/SceneProvider";
 import TargetPreview from "@/components/TargetPreview";
 import CombineShaderPass from "@/components/CombineShaderPass";
 import type {
-  CombineMode,
+  CombineShaderMode,
   CombineShaderPassProps,
 } from "@/components/CombineShaderPass";
 
@@ -20,7 +20,7 @@ type RenderPassSpec = {
 
 type CombineOptions = Partial<
   Omit<CombineShaderPassProps, "inputA" | "inputB" | "target">
-> & { mode?: CombineMode };
+> & { mode?: CombineShaderMode };
 
 type RenderPipelineProps = {
   passes: RenderPassSpec[];
@@ -48,19 +48,23 @@ export default function RenderPipeline({
   const sharedScene = useSceneContext();
   const size = sharedScene?.size ?? { width: 1, height: 1 };
 
+  const shouldCombine = Boolean(combine);
+
   const targets = useMemo(() => {
     const entries: TargetEntry[] = passes.map((_, index) => ({
       key: `pass_${index}`,
       target: new THREE.WebGLRenderTarget(1, 1, DEFAULT_TARGET_OPTIONS),
     }));
 
-    entries.push({
-      key: "combine",
-      target: new THREE.WebGLRenderTarget(1, 1, DEFAULT_TARGET_OPTIONS),
-    });
+    if (shouldCombine) {
+      entries.push({
+        key: "combine",
+        target: new THREE.WebGLRenderTarget(1, 1, DEFAULT_TARGET_OPTIONS),
+      });
+    }
 
     return entries;
-  }, [passes]);
+  }, [passes, shouldCombine]);
 
   useEffect(() => {
     if (size.width <= 1 || size.height <= 1) return;
@@ -105,7 +109,10 @@ export default function RenderPipeline({
 
     if (lastEnabledIndex === undefined) return null;
 
-    if (lastEnabledIndex <= Math.max(firstEnabledIndex, secondEnabledIndex)) {
+    if (
+      shouldCombine &&
+      lastEnabledIndex <= Math.max(firstEnabledIndex, secondEnabledIndex)
+    ) {
       return combineTarget ?? null;
     }
 
@@ -131,7 +138,12 @@ export default function RenderPipeline({
       />
     );
 
-    if (!combineRendered && combineTarget && index === secondEnabledIndex) {
+    if (
+      shouldCombine &&
+      !combineRendered &&
+      combineTarget &&
+      index === secondEnabledIndex
+    ) {
       const inputA =
         passOutputTarget(firstEnabledIndex)?.texture ?? inputTexture;
       const inputB =

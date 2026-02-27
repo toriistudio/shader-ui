@@ -20,7 +20,7 @@ import GlyphDitherPass, {
 import NoiseWarpPass, {
   type NoiseWarpPassUniforms,
 } from "@/components/DitherNoiseWarpPass";
-import type { CombineMode } from "@/components/CombineShaderPass";
+import type { CombineShaderMode } from "@/components/CombineShaderPass";
 
 type DitherPulseRingProps = {
   spriteTextureSrc?: string;
@@ -28,7 +28,7 @@ type DitherPulseRingProps = {
   diffuseEnabled?: boolean;
   blurEnabled?: boolean;
   noiseWarpEnabled?: boolean;
-  combineMode?: CombineMode;
+  combineMode?: CombineShaderMode;
   noiseWarpRadius?: NoiseWarpPassUniforms["radius"];
   noiseWarpStrength?: NoiseWarpPassUniforms["strength"];
   diffuseRadius?: DiffusePassUniforms["diffuseRadius"];
@@ -144,7 +144,7 @@ function DitherPulseRingContent({
   };
 
   const resolveColor = (
-    color?: [number, number, number] | string
+    color?: [number, number, number] | string,
   ): [number, number, number] | null => {
     if (!color) return null;
     if (typeof color === "string") {
