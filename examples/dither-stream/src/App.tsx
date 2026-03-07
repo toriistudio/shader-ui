@@ -81,10 +81,23 @@ const CONTROL_SCHEMA = {
     step: 0.005,
     folder: PROJECTION_FOLDER,
   },
+  backgroundImageEnabled: {
+    type: "boolean" as const,
+    value: true,
+    folder: BACKGROUND_FOLDER,
+  },
   backgroundImageSrc: {
     type: "string" as const,
     value:
       "https://media3.s-nbcnews.com/i/newscms/2020_04/3203206/200126-kobe-bryant-cs-551p_94a33c06ae6c4bbebaf59985de472c42.jpg",
+    folder: BACKGROUND_FOLDER,
+  },
+  backgroundImageScale: {
+    type: "number" as const,
+    value: 1.0,
+    min: 0.1,
+    max: 3,
+    step: 0.05,
     folder: BACKGROUND_FOLDER,
   },
   backgroundDithered: {
@@ -166,6 +179,10 @@ function ShaderScene() {
   }, [controls.beamCustomPathPoints]);
 
   const resolvedBackgroundImageSrc = useMemo(() => {
+    const enabled =
+      controls.backgroundImageEnabled ??
+      CONTROL_SCHEMA.backgroundImageEnabled.value;
+    if (!enabled) return undefined;
     const src = controls.backgroundImageSrc || undefined;
     if (!src) return src;
     try {
@@ -180,7 +197,7 @@ function ShaderScene() {
       );
     }
     return src;
-  }, [controls.backgroundImageSrc]);
+  }, [controls.backgroundImageEnabled, controls.backgroundImageSrc]);
 
   const selectedShape = (controls.beamPathShape ??
     CONTROL_SCHEMA.beamPathShape.value) as BeamPathShape;
@@ -197,6 +214,10 @@ function ShaderScene() {
     },
     [controls],
   );
+
+  const handlePathCancel = useCallback(() => {
+    setIsDrawModeActive(false);
+  }, []);
 
   return (
     <DitherStream
@@ -221,6 +242,10 @@ function ShaderScene() {
         controls.projectionSpeed ?? CONTROL_SCHEMA.projectionSpeed.value
       }
       backgroundImageSrc={resolvedBackgroundImageSrc}
+      backgroundImageScale={
+        controls.backgroundImageScale ??
+        CONTROL_SCHEMA.backgroundImageScale.value
+      }
       backgroundDithered={
         controls.backgroundDithered ?? CONTROL_SCHEMA.backgroundDithered.value
       }
@@ -232,7 +257,12 @@ function ShaderScene() {
         enabled={isDrawModeActive}
         beamColor={controls.beamColor ?? CONTROL_SCHEMA.beamColor.value}
         backgroundImageSrc={resolvedBackgroundImageSrc}
+        backgroundImageScale={
+          controls.backgroundImageScale ??
+          CONTROL_SCHEMA.backgroundImageScale.value
+        }
         onCommit={handlePathCommit}
+        onCancel={handlePathCancel}
       />
     </DitherStream>
   );

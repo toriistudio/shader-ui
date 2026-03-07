@@ -7,19 +7,21 @@ uniform sampler2D uBackgroundTexture;
 uniform float uHasBackground;
 uniform float uDitherBackground;
 uniform float uBackgroundAspect;
+uniform float uBackgroundScale;
 uniform vec2 uResolution;
 
 out vec4 fragColor;
 
 // Object-cover UV: fills the canvas, cropping the image centered at (0.5, 0.5).
-vec2 coverUV(vec2 uv, float imageAspect, float canvasAspect) {
+// scale > 1 zooms in, scale < 1 zooms out.
+vec2 coverUV(vec2 uv, float imageAspect, float canvasAspect, float scale) {
   vec2 offset = uv - 0.5;
   if (imageAspect > canvasAspect) {
     offset.x *= canvasAspect / imageAspect;
   } else {
     offset.y *= imageAspect / canvasAspect;
   }
-  return offset + 0.5;
+  return (offset / scale) + 0.5;
 }
 
 void main() {
@@ -55,8 +57,8 @@ void main() {
   vec3 tint = (c.rgb - si * 0.04) * 1.4;
 
   // Background — sampled with cover UVs
-  vec2 bgUV = coverUV(uv, uBackgroundAspect, ar);
-  vec2 bgCellUV = coverUV(pixelUv, uBackgroundAspect, ar);
+  vec2 bgUV = coverUV(uv, uBackgroundAspect, ar, uBackgroundScale);
+  vec2 bgCellUV = coverUV(pixelUv, uBackgroundAspect, ar, uBackgroundScale);
 
   float beamReveal = smoothstep(0.4, 0.75, lum);
   vec3 bgRaw = texture(uBackgroundTexture, bgUV).rgb;

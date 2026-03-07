@@ -38,7 +38,9 @@ type DitherStreamPathDrawerProps = {
   enabled: boolean;
   beamColor?: string;
   backgroundImageSrc?: string;
+  backgroundImageScale?: number;
   onCommit: (points: Array<[number, number]>) => void;
+  onCancel?: () => void;
 };
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
@@ -80,7 +82,9 @@ export default function DitherStreamPathDrawer({
   enabled,
   beamColor = "#aab0f0",
   backgroundImageSrc,
+  backgroundImageScale = 1,
   onCommit,
+  onCancel,
 }: DitherStreamPathDrawerProps) {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -257,6 +261,28 @@ export default function DitherStreamPathDrawer({
   );
 
   useEffect(() => {
+    if (!enabled) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      drawingRef.current = false;
+      pointerIdRef.current = null;
+      lastPixelPointRef.current = null;
+      if (commitTimeoutRef.current) {
+        clearTimeout(commitTimeoutRef.current);
+        commitTimeoutRef.current = null;
+      }
+      updatePoints([]);
+      clearCanvas();
+      setCursor(null);
+      onCancel?.();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [enabled, clearCanvas, updatePoints, onCancel]);
+
+  useEffect(() => {
     if (enabled) return;
     drawingRef.current = false;
     pointerIdRef.current = null;
@@ -302,7 +328,7 @@ export default function DitherStreamPathDrawer({
   return (
     <div
       ref={overlayRef}
-      className="absolute inset-0 z-20 cursor-crosshair touch-none"
+      className="absolute inset-0 z-20 cursor-crosshair touch-none overflow-hidden"
       style={{
         background: backgroundImageSrc
           ? undefined
@@ -374,6 +400,7 @@ export default function DitherStreamPathDrawer({
           <img
             src={backgroundImageSrc}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+            style={{ transform: `scale(${backgroundImageScale})` }}
             alt=""
             aria-hidden
           />

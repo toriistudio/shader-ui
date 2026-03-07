@@ -16,6 +16,7 @@ type DitherStreamProps = {
   children?: React.ReactNode;
   imageTextureSrc?: string;
   backgroundImageSrc?: string;
+  backgroundImageScale?: number;
   backgroundDithered?: boolean;
   projectionSpeed?: number;
   beamSpeed?: number;
@@ -46,6 +47,7 @@ export default function DitherStream({
   children,
   imageTextureSrc,
   backgroundImageSrc,
+  backgroundImageScale = 1.0,
   backgroundDithered = true,
   projectionSpeed = 0.05,
   beamSpeed = 0.1,
@@ -108,7 +110,11 @@ export default function DitherStream({
           },
           {
             component: DitherStreamDitherPass,
-            props: { backgroundImageSrc, ditherBackground: backgroundDithered },
+            props: {
+              backgroundImageSrc,
+              backgroundImageScale,
+              ditherBackground: backgroundDithered,
+            },
           },
           {
             component: DitherStreamGodRaysPass,

@@ -3,14 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
-import createFallbackTexture from "@/utils/createFallbackTexture";
 import ShaderPass from "@/components/ShaderPass";
+import createFallbackTexture from "@/utils/createFallbackTexture";
 import fragmentShader from "@/shaders/dither-godray-dither/fragment.glsl";
 import vertexShader from "@/shaders/dither-godray-dither/vertex.glsl";
 
 type DitherStreamDitherPassProps = {
   inputTexture?: THREE.Texture | null;
   backgroundImageSrc?: string;
+  backgroundImageScale?: number;
   ditherBackground?: boolean;
   target?: THREE.WebGLRenderTarget | null;
   clear?: boolean;
@@ -21,6 +22,7 @@ type DitherStreamDitherPassProps = {
 export default function DitherStreamDitherPass({
   inputTexture = null,
   backgroundImageSrc,
+  backgroundImageScale = 1.0,
   ditherBackground = true,
   target = null,
   clear = true,
@@ -82,6 +84,7 @@ export default function DitherStreamDitherPass({
       uHasBackground: { value: 0.0 },
       uDitherBackground: { value: 1.0 },
       uBackgroundAspect: { value: 1.0 },
+      uBackgroundScale: { value: 1.0 },
       uResolution: { value: new THREE.Vector2(1, 1) },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,6 +96,7 @@ export default function DitherStreamDitherPass({
   uniforms.uHasBackground.value = backgroundTexture ? 1.0 : 0.0;
   uniforms.uDitherBackground.value = ditherBackground ? 1.0 : 0.0;
   uniforms.uBackgroundAspect.value = backgroundAspect;
+  uniforms.uBackgroundScale.value = backgroundImageScale;
 
   return (
     <ShaderPass
