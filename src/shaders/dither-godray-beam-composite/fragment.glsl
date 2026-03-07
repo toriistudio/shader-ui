@@ -13,6 +13,8 @@ uniform vec2 uBeamCenter;
 uniform float uBeamRadius;
 uniform float uBeamScale;
 uniform int uPathShape;
+uniform int uCustomPointCount;
+uniform vec2 uCustomPoints[64];
 uniform vec2 uPathPos;
 uniform float uPathAngle;
 
@@ -20,6 +22,7 @@ out vec4 fragColor;
 
 const float PI = 3.14159265;
 const float TWO_PI = 6.28318531;
+const int MAX_CUSTOM_POINTS = 64;
 
 uvec2 hash2d(uvec2 v) {
   v = v * 1664525u + 1013904223u;
@@ -80,6 +83,13 @@ vec2 rot2(vec2 v, float a) {
   return vec2(v.x * c - v.y * s, v.x * s + v.y * c);
 }
 
+float segmentDistance(vec2 p, vec2 a, vec2 b) {
+  vec2 pa = p - a;
+  vec2 ba = b - a;
+  float h = clamp(dot(pa, ba) / max(dot(ba, ba), 0.00001), 0.0, 1.0);
+  return length(pa - ba * h);
+}
+
 vec3 beamAt(vec2 uv) {
   float aspect = uResolution.x / uResolution.y;
   vec2 center = uBeamCenter;
@@ -96,6 +106,7 @@ vec3 beamAt(vec2 uv) {
     abs(length(vec2(delta.x / 1.5, delta.y)) - ringRadius);
   float triangleDist =
     abs(sdEquilateralTriangle(delta / max(ringRadius, 0.0001))) * ringRadius;
+  float customDist = 10.0;
 
   float ringDist = circleDist;
   if (uPathShape == 1) {
@@ -106,6 +117,17 @@ vec3 beamAt(vec2 uv) {
     ringDist = triangleDist;
   } else if (uPathShape == 4) {
     ringDist = ovalDist;
+  } else if (uPathShape == 5 && uCustomPointCount > 1) {
+    vec2 uva = vec2(uv.x * aspect, uv.y);
+    for (int i = 0; i < MAX_CUSTOM_POINTS - 1; i++) {
+      if (i >= uCustomPointCount - 1) {
+        break;
+      }
+      vec2 a = vec2(uCustomPoints[i].x * aspect, uCustomPoints[i].y);
+      vec2 b = vec2(uCustomPoints[i + 1].x * aspect, uCustomPoints[i + 1].y);
+      customDist = min(customDist, segmentDistance(uva, a, b));
+    }
+    ringDist = customDist;
   }
 
   float b = 0.25 / (1.0 - smoothstep(0.2, 0.002, ringDist + 0.02));

@@ -16,7 +16,8 @@ type DitherStreamBeamCompositePassProps = {
   beamCenter?: [number, number];
   beamRadius?: number;
   beamScale?: number;
-  pathShape?: "circle" | "square" | "diamond" | "triangle" | "oval";
+  pathShape?: "circle" | "square" | "diamond" | "triangle" | "oval" | "custom";
+  customPathPoints?: Array<[number, number]>;
   pathPos?: [number, number];
   pathAngle?: number;
   target?: THREE.WebGLRenderTarget | null;
@@ -34,6 +35,7 @@ export default function DitherStreamBeamCompositePass({
   beamRadius = 0.6,
   beamScale = 1,
   pathShape = "circle",
+  customPathPoints = [],
   pathPos = [0.5009, 1.0473],
   pathAngle = (0.999 - 0.25) * -6.28318531,
   target = null,
@@ -41,6 +43,7 @@ export default function DitherStreamBeamCompositePass({
   enabled = true,
   priority = 0,
 }: DitherStreamBeamCompositePassProps) {
+  const MAX_CUSTOM_POINTS = 64;
   const fallbackTexture = useMemo(() => createFallbackTexture(), []);
 
   const uniforms = useMemo<Record<string, THREE.IUniform>>(
@@ -66,7 +69,18 @@ export default function DitherStreamBeamCompositePass({
                 ? 3
                 : pathShape === "oval"
                   ? 4
-                  : 0,
+                  : pathShape === "custom"
+                    ? 5
+                    : 0,
+      },
+      uCustomPointCount: {
+        value: Math.min(customPathPoints.length, MAX_CUSTOM_POINTS),
+      },
+      uCustomPoints: {
+        value: Array.from(
+          { length: MAX_CUSTOM_POINTS },
+          () => new THREE.Vector2(-1, -1),
+        ),
       },
       uPathPos: { value: new THREE.Vector2(pathPos[0], pathPos[1]) },
       uPathAngle: { value: pathAngle },
@@ -98,7 +112,18 @@ export default function DitherStreamBeamCompositePass({
           ? 3
           : pathShape === "oval"
             ? 4
-            : 0;
+            : pathShape === "custom"
+              ? 5
+              : 0;
+  uniforms.uCustomPointCount.value = Math.min(
+    customPathPoints.length,
+    MAX_CUSTOM_POINTS,
+  );
+  const uniformCustomPoints = uniforms.uCustomPoints.value as THREE.Vector2[];
+  for (let index = 0; index < MAX_CUSTOM_POINTS; index += 1) {
+    const point = customPathPoints[index];
+    uniformCustomPoints[index].set(point?.[0] ?? -1, point?.[1] ?? -1);
+  }
   (uniforms.uPathPos.value as THREE.Vector2).set(pathPos[0], pathPos[1]);
   uniforms.uPathAngle.value = pathAngle;
 

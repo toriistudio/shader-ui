@@ -13,7 +13,10 @@ type DitherStreamProps = {
   height?: string | number;
   className?: string;
   style?: React.CSSProperties;
+  children?: React.ReactNode;
   imageTextureSrc?: string;
+  backgroundImageSrc?: string;
+  backgroundDithered?: boolean;
   projectionSpeed?: number;
   beamSpeed?: number;
   beamDirection?: "counterclockwise" | "clockwise";
@@ -21,7 +24,15 @@ type DitherStreamProps = {
   beamCenter?: [number, number];
   beamRadius?: number;
   beamScale?: number;
-  beamPathShape?: "circle" | "square" | "diamond" | "triangle" | "oval";
+  beamPathShape?:
+    | "circle"
+    | "square"
+    | "diamond"
+    | "triangle"
+    | "oval"
+    | "custom";
+  beamCustomPathPoints?: Array<[number, number]>;
+  beamEnabled?: boolean;
   pathPos?: [number, number];
   pathAngle?: number;
   godrayIntensity?: number;
@@ -32,7 +43,10 @@ export default function DitherStream({
   height = "100%",
   className = "relative h-full w-full",
   style,
+  children,
   imageTextureSrc,
+  backgroundImageSrc,
+  backgroundDithered = true,
   projectionSpeed = 0.05,
   beamSpeed = 0.1,
   beamDirection = "counterclockwise",
@@ -41,6 +55,8 @@ export default function DitherStream({
   beamRadius = 0.6,
   beamScale = 1,
   beamPathShape = "circle",
+  beamCustomPathPoints = [],
+  beamEnabled = true,
   pathPos = [0.5009, 1.0473],
   pathAngle = (0.999 - 0.25) * -6.28318531,
   godrayIntensity = 2.9,
@@ -76,6 +92,7 @@ export default function DitherStream({
           },
           {
             component: DitherStreamBeamCompositePass,
+            enabled: beamEnabled,
             props: {
               beamSpeed,
               beamDirection,
@@ -84,12 +101,14 @@ export default function DitherStream({
               beamRadius,
               beamScale,
               pathShape: beamPathShape,
+              customPathPoints: beamCustomPathPoints,
               pathPos,
               pathAngle,
             },
           },
           {
             component: DitherStreamDitherPass,
+            props: { backgroundImageSrc, ditherBackground: backgroundDithered },
           },
           {
             component: DitherStreamGodRaysPass,
@@ -97,6 +116,7 @@ export default function DitherStream({
           },
         ]}
       />
+      {children}
     </SceneProvider>
   );
 }
