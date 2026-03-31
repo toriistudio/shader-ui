@@ -30,6 +30,7 @@ pnpm-debug.log* # Added pnpm log
 Thumbs.db
 
 # Agents
+docs
 .agents
 .claude
 .codex
