@@ -4,6 +4,8 @@ node_modules
 # Build output
 dist
 .yalc
+yalc.lock
+examples/*/yarn.lock
 
 # Logs
 npm-debug.log*

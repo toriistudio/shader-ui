@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import opentype, { Font, PathCommand } from "opentype.js";
+import type { Font, PathCommand } from "opentype.js";
 import waltographUrl from "../assets/fonts/waltographUI.ttf";
 
 type Pt = { x: number; y: number };
@@ -814,7 +814,8 @@ export default function WandyHand({
           );
         }
         const buffer = await response.arrayBuffer();
-        const loaded = opentype.parse(buffer);
+        const opentype = await import("opentype.js");
+        const loaded = opentype.default.parse(buffer);
         if (!cancelled) setFont(loaded);
       } catch (err) {
         if (!cancelled) {
