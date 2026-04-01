@@ -31,4 +31,5 @@ export { default as RippleWave } from "@/components/RippleWave";
 export { default as DitherPulseRing } from "@/components/DitherPulseRing";
 export { type CombineShaderMode } from "@/components/CombineShaderPass";
 export { default as DitherStream } from "@/components/DitherStream";
+export { default as FluidAmberRadiant } from "@/components/FluidAmberRadiant";
 export { default as DitherStreamPathDrawer } from "@/components/DitherStreamPathDrawer";
