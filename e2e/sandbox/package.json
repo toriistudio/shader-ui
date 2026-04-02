@@ -1,0 +1,20 @@
+{
+  "name": "shader-ui-e2e-sandbox",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "yarn reset && yalc add @toriistudio/shader-ui && yarn && vite --port 5174",
+    "build": "vite build",
+    "reset": "rm -rf .yalc node_modules yarn.lock && yalc add @toriistudio/shader-ui && yarn"
+  },
+  "dependencies": {
+    "@toriistudio/shader-ui": "file:.yalc/@toriistudio/shader-ui",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.5.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0"
+  }
+}

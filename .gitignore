@@ -6,6 +6,10 @@ dist
 .yalc
 yalc.lock
 examples/*/yarn.lock
+e2e/sandbox/.yalc
+e2e/sandbox/yalc.lock
+e2e/sandbox/yarn.lock
+test-results
 
 # Logs
 npm-debug.log*

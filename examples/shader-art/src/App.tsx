@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import {
   Playground,
   useControls,
@@ -36,11 +37,28 @@ const SHADER_ART_SCHEMA: ControlsSchema = {
 };
 
 function ShaderArtPreview() {
+  const showCopyButtonFn = useCallback(({ values, jsonToComponentString }) => {
+    const newValues = Object.fromEntries(
+      Object.entries(values).filter(([key]) =>
+        Object.prototype.hasOwnProperty.call(SHADER_ART_SCHEMA, key),
+      ),
+    );
+
+    return jsonToComponentString({
+      props: {
+        width: "100%",
+        height: "100%",
+        uniforms: newValues,
+      },
+    });
+  }, []);
+
   const controlValues = useControls(SHADER_ART_SCHEMA, {
     componentName: "ShaderArt",
     config: {
       mainLabel: "Shader Art Controls",
       showGrid: false,
+      showCopyButtonFn,
       showCopyButton: false,
       showCodeSnippet: true,
     },
@@ -54,7 +72,7 @@ function ShaderArtPreview() {
 
   return (
     <ShaderArt
-      className="relative z-10 h-full w-full"
+      className="relative z-50 h-full w-full"
       uniforms={{
         uIterations,
         uAmplitude,

@@ -15,7 +15,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-switch": "^1.2.6",
     "@toriistudio/shader-ui": "file:.yalc/@toriistudio/shader-ui",
-    "@toriistudio/v0-playground": "^0.7.3",
+    "@toriistudio/v0-playground": "^0.7.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lodash": "^4.17.21",
