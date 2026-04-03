@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  component-coverage-check:
+    name: New Component Coverage Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check new exports have e2e test entries
+        run: |
+          ADDED=$(git diff origin/main...HEAD -- src/index.ts \
+            | grep '^+' | grep -v '^+++' \
+            | grep -oE 'default as [A-Za-z]+' | awk '{print $3}')
+
+          if [ -z "$ADDED" ]; then
+            echo "No new component exports detected."
+            exit 0
+          fi
+
+          echo "New components found: $ADDED"
+          MISSING=""
+          for COMP in $ADDED; do
+            if ! grep -q "component: \"$COMP\"" e2e/tests/code-fidelity.spec.ts; then
+              MISSING="$MISSING $COMP"
+            fi
+          done
+
+          if [ -n "$MISSING" ]; then
+            echo "::error::New components missing e2e test entries in EXAMPLES (e2e/tests/code-fidelity.spec.ts):${MISSING}"
+            echo ""
+            echo "Add an entry to the EXAMPLES array for each new component."
+            echo "See the existing ShaderArt entry as a reference."
+            exit 1
+          fi
+
+          echo "All new components have EXAMPLES entries."
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - name: Install yalc
+        run: npm install -g yalc
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build and publish locally
+        run: yarn build && yalc push
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Setup sandbox
+        run: |
+          cd e2e/sandbox
+          rm -rf .yalc node_modules yarn.lock
+          yalc add @toriistudio/shader-ui
+          yarn install
+
+      - name: Setup example apps
+        run: |
+          cd examples/shader-art
+          rm -rf .yalc node_modules yarn.lock
+          yalc add @toriistudio/shader-ui
+          yarn install
+
+      - name: Run E2E tests
+        run: cd e2e && npx playwright test --config=playwright.config.ts
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            test-results/
+            e2e/test-results/
+          retention-days: 7
