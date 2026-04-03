@@ -27,6 +27,15 @@ const EXAMPLES: ExampleConfig[] = [
       { label: "uFreq", value: "2.0", propPath: "uniforms.uFreq" },
     ],
   },
+  {
+    slug: "fluid-amber-radiant",
+    component: "FluidAmberRadiant",
+    port: 5175,
+    controls: [
+      { label: "timeScale", value: "0.25", propPath: "timeScale" },
+      { label: "ampDecay", value: "0.6", propPath: "ampDecay" },
+    ],
+  },
 ];
 
 /** Resolve a dot-path like "uniforms.uAmplitude" on an object */

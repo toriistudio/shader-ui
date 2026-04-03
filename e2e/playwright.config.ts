@@ -26,5 +26,12 @@ export default defineConfig({
       reuseExistingServer: true,
       timeout: 60_000,
     },
+    {
+      command: "cd examples/fluid-amber-radiant && yarn dev -- --port 5175",
+      port: 5175,
+      cwd: "../",
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
   ],
 });

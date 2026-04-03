@@ -78,10 +78,13 @@ jobs:
 
       - name: Setup example apps
         run: |
-          cd examples/shader-art
-          rm -rf .yalc node_modules yarn.lock
-          yalc add @toriistudio/shader-ui
-          yarn install
+          for example in shader-art fluid-amber-radiant; do
+            cd examples/$example
+            rm -rf .yalc node_modules yarn.lock
+            yalc add @toriistudio/shader-ui
+            yarn install
+            cd ../..
+          done
 
       - name: Run E2E tests
         run: cd e2e && npx playwright test --config=playwright.config.ts
