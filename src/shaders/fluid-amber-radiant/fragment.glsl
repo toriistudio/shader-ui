@@ -7,7 +7,8 @@ uniform float uTime;
 uniform vec2  uResolution;
 uniform float uTimeScale;
 uniform float uAmpDecay;
-uniform vec2  uMouse;
+uniform vec2  uRippleOrigin;
+uniform float uRippleStart;
 uniform vec3  uPaletteA;
 uniform vec3  uPaletteB;
 uniform int   uHasPalette;
@@ -59,16 +60,28 @@ void main() {
 
   float t = uTime * uTimeScale;
 
-  // Mouse swirl distortion
-  if (uMouse.x >= 0.0) {
-    vec2 mNorm = uMouse - 0.5;
-    mNorm.x *= uResolution.x / max(uResolution.y, 1.0);
-    vec2 diff = p - mNorm;
+  // Click ripple displacement
+  if (uRippleStart >= 0.0) {
+    float age = uTime - uRippleStart;
+    vec2 rOrigin = uRippleOrigin - 0.5;
+    rOrigin.x *= uResolution.x / max(uResolution.y, 1.0);
+
+    vec2 diff = p - rOrigin;
     float dist = length(diff);
-    float swirl = exp(-dist * dist * 8.0) * 0.4;
-    float angle = swirl * 6.0;
-    float ca = cos(angle), sa = sin(angle);
-    p = mNorm + mat2(ca, -sa, sa, ca) * diff;
+
+    // Expanding ring
+    float rippleRadius = age * 0.5;
+    float ringDist = dist - rippleRadius;
+    float ring = exp(-ringDist * ringDist * 30.0);
+
+    // Smooth decay over time
+    float decay = exp(-age * 1.2);
+
+    // Radial push along the ring + subtle noise wobble
+    vec2 dir = normalize(diff + 0.0001);
+    float n = snoise(p * 3.0 + age * 0.4);
+    p += dir * ring * decay * 0.18
+       + vec2(n, snoise(p * 3.0 + vec2(5.0) + age * 0.4)) * ring * decay * 0.05;
   }
 
   // Triple-layer domain-warped FBM

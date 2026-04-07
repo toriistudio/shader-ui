@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import * as THREE from "three";
 
 import ShaderPass from "@/components/ShaderPass";
@@ -10,16 +10,20 @@ import vertexShader from "@/shaders/fluid-amber-radiant/vertex.glsl";
 type FluidAmberRadiantProps = {
   width?: string | number;
   height?: string | number;
+  className?: string;
   timeScale?: number;
   ampDecay?: number;
+  rippleOnClick?: boolean;
   hexColors?: string[];
 };
 
 export default function FluidAmberRadiant({
   width,
   height,
+  className,
   timeScale = 0.15,
   ampDecay = 0.48,
+  rippleOnClick = false,
   hexColors,
 }: FluidAmberRadiantProps) {
   const uniforms = useMemo(
@@ -28,7 +32,8 @@ export default function FluidAmberRadiant({
       uResolution: { value: new THREE.Vector2() },
       uTimeScale: { value: timeScale },
       uAmpDecay: { value: ampDecay },
-      uMouse: { value: new THREE.Vector2(-1, -1) },
+      uRippleOrigin: { value: new THREE.Vector2(0, 0) },
+      uRippleStart: { value: -1 },
       uPaletteA: { value: new THREE.Color(0, 0, 0) },
       uPaletteB: { value: new THREE.Color(0, 0, 0) },
       uHasPalette: { value: 0 },
@@ -39,6 +44,18 @@ export default function FluidAmberRadiant({
 
   uniforms.uTimeScale.value = timeScale;
   uniforms.uAmpDecay.value = ampDecay;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!rippleOnClick) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = 1 - (e.clientY - rect.top) / rect.height;
+      (uniforms.uRippleOrigin.value as THREE.Vector2).set(x, y);
+      uniforms.uRippleStart.value = uniforms.uTime.value;
+    },
+    [rippleOnClick, uniforms],
+  );
 
   const mixedPalette = useMemo(() => {
     if (!hexColors?.length) return null;
@@ -77,6 +94,7 @@ export default function FluidAmberRadiant({
 
   return (
     <ShaderPass
+      className={className}
       vertexShader={vertexShader}
       fragmentShader={fragmentShader}
       uniforms={uniforms}
@@ -86,6 +104,8 @@ export default function FluidAmberRadiant({
       priority={1}
       width={width}
       height={height}
+      onClick={handleClick}
+      style={rippleOnClick ? { cursor: "pointer" } : undefined}
     />
   );
 }

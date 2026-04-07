@@ -1,11 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import {
-  Playground,
-  useControls,
-  useAdvancedPaletteControls,
-} from "@toriistudio/v0-playground";
+import { useCallback } from "react";
+import { Playground, useControls } from "@toriistudio/v0-playground";
 
 import { FluidAmberRadiant } from "@toriistudio/shader-ui";
 
@@ -24,33 +20,32 @@ const CONTROL_SCHEMA = {
     max: 0.8,
     step: 0.01,
   },
+  color: {
+    type: "color" as const,
+    value: "#32c8c5",
+    folder: "Colors",
+  },
+  rippleOnClick: {
+    type: "boolean" as const,
+    value: false,
+    folder: "Interaction",
+  },
 };
 
 function ShaderScene() {
-  const { hexColors, controlConfig } = useAdvancedPaletteControls({
-    defaultPalette: ["#000000", "#000000", "#ffffff", "#ffffff"],
-    control: { folder: "Colors" },
-  });
-
-  const hexColorsRef = useRef(hexColors);
-
-  useEffect(() => {
-    hexColorsRef.current = hexColors;
-  }, [hexColors]);
-
   const showCopyButtonFn = useCallback(({ values, jsonToComponentString }) => {
-    const newValues = Object.fromEntries(
-      Object.entries(values).filter(([key]) =>
-        Object.prototype.hasOwnProperty.call(CONTROL_SCHEMA, key),
-      ),
-    );
+    const color = values.color ?? CONTROL_SCHEMA.color.value;
+    const rippleOnClick =
+      values.rippleOnClick ?? CONTROL_SCHEMA.rippleOnClick.value;
 
     return jsonToComponentString({
       props: {
         width: "100%",
         height: "100%",
-        ...newValues,
-        hexColors: hexColorsRef.current,
+        timeScale: values.timeScale ?? CONTROL_SCHEMA.timeScale.value,
+        ampDecay: values.ampDecay ?? CONTROL_SCHEMA.ampDecay.value,
+        hexColors: [color, color],
+        ...(rippleOnClick ? { rippleOnClick: true } : {}),
       },
     });
   }, []);
@@ -63,16 +58,20 @@ function ShaderScene() {
       showCopyButtonFn,
       showCopyButton: false,
       showCodeSnippet: true,
-      addAdvancedPaletteControl: controlConfig,
     },
   });
+
+  const color = controls.color ?? CONTROL_SCHEMA.color.value;
 
   return (
     <FluidAmberRadiant
       className="relative z-10 h-full w-full"
       timeScale={controls.timeScale ?? CONTROL_SCHEMA.timeScale.value}
       ampDecay={controls.ampDecay ?? CONTROL_SCHEMA.ampDecay.value}
-      hexColors={hexColors}
+      hexColors={[color, color]}
+      rippleOnClick={
+        controls.rippleOnClick ?? CONTROL_SCHEMA.rippleOnClick.value
+      }
     />
   );
 }
