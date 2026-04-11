@@ -28,8 +28,8 @@ const EXAMPLES: ExampleConfig[] = [
     ],
   },
   {
-    slug: "fluid-amber-radiant",
-    component: "FluidAmberRadiant",
+    slug: "dense-fluid",
+    component: "DenseFluid",
     port: 5175,
     controls: [
       { label: "timeScale", value: "0.25", propPath: "timeScale" },

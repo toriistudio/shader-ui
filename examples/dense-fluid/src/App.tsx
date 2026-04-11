@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { Playground, useControls } from "@toriistudio/v0-playground";
 
-import { FluidAmberRadiant } from "@toriistudio/shader-ui";
+import { DenseFluid } from "@toriistudio/shader-ui";
 
 const CONTROL_SCHEMA = {
   timeScale: {
@@ -22,38 +22,34 @@ const CONTROL_SCHEMA = {
   },
   color: {
     type: "color" as const,
-    value: "#32c8c5",
+    value: "#fff",
     folder: "Colors",
   },
-  rippleOnClick: {
+  ripple: {
     type: "boolean" as const,
-    value: false,
+    value: true,
     folder: "Interaction",
   },
 };
 
 function ShaderScene() {
   const showCopyButtonFn = useCallback(({ values, jsonToComponentString }) => {
-    const color = values.color ?? CONTROL_SCHEMA.color.value;
-    const rippleOnClick =
-      values.rippleOnClick ?? CONTROL_SCHEMA.rippleOnClick.value;
-
     return jsonToComponentString({
       props: {
         width: "100%",
         height: "100%",
         timeScale: values.timeScale ?? CONTROL_SCHEMA.timeScale.value,
         ampDecay: values.ampDecay ?? CONTROL_SCHEMA.ampDecay.value,
-        hexColors: [color, color],
-        ...(rippleOnClick ? { rippleOnClick: true } : {}),
+        color: values.color ?? CONTROL_SCHEMA.color.value,
+        ripple: values.ripple ?? CONTROL_SCHEMA.ripple.value,
       },
     });
   }, []);
 
   const controls = useControls(CONTROL_SCHEMA, {
-    componentName: "FluidAmberRadiant",
+    componentName: "DenseFluid",
     config: {
-      mainLabel: "Fluid Amber Radiant Controls",
+      mainLabel: "Dense Fluid Controls",
       showGrid: false,
       showCopyButtonFn,
       showCopyButton: false,
@@ -61,17 +57,13 @@ function ShaderScene() {
     },
   });
 
-  const color = controls.color ?? CONTROL_SCHEMA.color.value;
-
   return (
-    <FluidAmberRadiant
+    <DenseFluid
       className="relative z-10 h-full w-full"
       timeScale={controls.timeScale ?? CONTROL_SCHEMA.timeScale.value}
       ampDecay={controls.ampDecay ?? CONTROL_SCHEMA.ampDecay.value}
-      hexColors={[color, color]}
-      rippleOnClick={
-        controls.rippleOnClick ?? CONTROL_SCHEMA.rippleOnClick.value
-      }
+      color={controls.color ?? CONTROL_SCHEMA.color.value}
+      ripple={controls.ripple ?? CONTROL_SCHEMA.ripple.value}
     />
   );
 }

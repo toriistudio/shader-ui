@@ -78,7 +78,7 @@ jobs:
 
       - name: Setup example apps
         run: |
-          for example in shader-art fluid-amber-radiant; do
+          for example in shader-art dense-fluid; do
             cd examples/$example
             rm -rf .yalc node_modules yarn.lock
             yalc add @toriistudio/shader-ui

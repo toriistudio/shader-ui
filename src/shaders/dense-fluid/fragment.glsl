@@ -7,11 +7,11 @@ uniform float uTime;
 uniform vec2  uResolution;
 uniform float uTimeScale;
 uniform float uAmpDecay;
-uniform vec2  uRippleOrigin;
-uniform float uRippleStart;
-uniform vec3  uPaletteA;
-uniform vec3  uPaletteB;
-uniform int   uHasPalette;
+const int NUM_RIPPLES = 6;
+uniform vec2  uRippleOrigins[NUM_RIPPLES];
+uniform float uRippleStarts[NUM_RIPPLES];
+uniform vec3  uColor;
+uniform int   uHasColor;
 
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec2 mod289v2(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -60,29 +60,29 @@ void main() {
 
   float t = uTime * uTimeScale;
 
-  // Click ripple displacement
-  if (uRippleStart >= 0.0) {
-    float age = uTime - uRippleStart;
-    vec2 rOrigin = uRippleOrigin - 0.5;
+  // Ripple displacement — expanding rings from click/drag events
+  vec2 rippleDisp = vec2(0.0);
+  for (int i = 0; i < NUM_RIPPLES; i++) {
+    float start = uRippleStarts[i];
+    if (start < 0.0) continue;
+    float age = uTime - start;
+    if (age > 3.0) continue;
+
+    vec2 rOrigin = uRippleOrigins[i] - 0.5;
     rOrigin.x *= uResolution.x / max(uResolution.y, 1.0);
 
     vec2 diff = p - rOrigin;
     float dist = length(diff);
-
-    // Expanding ring
-    float rippleRadius = age * 0.5;
-    float ringDist = dist - rippleRadius;
-    float ring = exp(-ringDist * ringDist * 30.0);
-
-    // Smooth decay over time
-    float decay = exp(-age * 1.2);
-
-    // Radial push along the ring + subtle noise wobble
     vec2 dir = normalize(diff + 0.0001);
+
+    float radius = age * 0.5;
+    float ring = exp(-(dist - radius) * (dist - radius) * 30.0);
+    float decay = exp(-age * 1.2);
     float n = snoise(p * 3.0 + age * 0.4);
-    p += dir * ring * decay * 0.18
-       + vec2(n, snoise(p * 3.0 + vec2(5.0) + age * 0.4)) * ring * decay * 0.05;
+    rippleDisp += dir * ring * decay * 0.18
+      + vec2(n, snoise(p * 3.0 + vec2(5.0) + age * 0.4)) * ring * decay * 0.05;
   }
+  p += rippleDisp;
 
   // Triple-layer domain-warped FBM
   vec2 q = vec2(fbm(p + vec2(0.0, 0.0), t),
@@ -95,11 +95,13 @@ void main() {
 
   // Color mixing
   vec3 col;
-  if (uHasPalette == 1) {
-    vec3 dark = uPaletteA * 0.3;
-    col = mix(dark, uPaletteA, clamp(f * f * 2.0, 0.0, 1.0));
-    col = mix(col, uPaletteB, clamp(length(q) * 0.5, 0.0, 1.0));
-    col = mix(col, mix(uPaletteA, uPaletteB, 0.5) * 1.3, clamp(length(r.x) * 0.6, 0.0, 1.0));
+  if (uHasColor == 1) {
+    vec3 dark = uColor * 0.25;
+    vec3 mid = uColor;
+    vec3 bright = uColor * 1.35;
+    col = mix(dark, mid, clamp(f * f * 2.0, 0.0, 1.0));
+    col = mix(col, mid, clamp(length(q) * 0.5, 0.0, 1.0));
+    col = mix(col, bright, clamp(length(r.x) * 0.6, 0.0, 1.0));
   } else {
     col = mix(vec3(0.075, 0.065, 0.055), vec3(0.20, 0.14, 0.07), clamp(f * f * 2.0, 0.0, 1.0));
     col = mix(col, vec3(0.78, 0.58, 0.24), clamp(length(q) * 0.5, 0.0, 1.0));

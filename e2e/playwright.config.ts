@@ -28,7 +28,7 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: "cd examples/fluid-amber-radiant && yarn install && npx vite --port 5175",
+      command: "cd examples/dense-fluid && yarn install && npx vite --port 5175",
       port: 5175,
       cwd: "../",
       reuseExistingServer: false,
