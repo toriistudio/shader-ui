@@ -16,6 +16,7 @@ export default defineConfig([
       "three-stdlib",
       "react/jsx-runtime",
       "react/jsx-dev-runtime",
+      "opentype.js",
     ],
     esbuildOptions(options) {
       options.loader = {
